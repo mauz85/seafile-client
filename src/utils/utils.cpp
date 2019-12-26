@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <sqlite3.h>
-#include <glib.h>
+#include "glib.h"
 #include <cstring>
 #include <QObject>
 #include <QString>
@@ -13,7 +13,7 @@
 #include <QProcess>
 #include <QDesktopServices>
 #include <QHostInfo>
-#include <jansson.h>
+#include "jansson.h"
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 #include <QUrlQuery>
 #endif

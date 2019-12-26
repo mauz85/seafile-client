@@ -8,6 +8,8 @@ SET(PROJECT_VERSION "${SEAFILE_CLIENT_VERSION_MAJOR}.${SEAFILE_CLIENT_VERSION_MI
 ADD_DEFINITIONS(-DSEAFILE_CLIENT_VERSION=${PROJECT_VERSION})
 INCLUDE(FindPkgConfig)
 
+set(ANDROID_PLATFORM 28) # TODO: Set this over environment variable!!!!!
+
 ## Build crash repoter on release build as default
 IF (NOT (${CMAKE_BUILD_TYPE} MATCHES Release))
   SET(CMAKE_BUILD_TYPE Debug)
@@ -207,6 +209,7 @@ if (APPLE)
 endif()
 
 ADD_DEFINITIONS(-DQUAZIP_STATIC)
+ADD_DEFINITIONS(-DSQLITE3_STATIC)
 
 # MOC FILES
 SET(moc_headers
@@ -500,6 +503,8 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/QtAwesome
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/quazip
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/sqlite3
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/jansson
   )
 
 FOREACH(USE_QT_LIBRARY ${USE_QT_LIBRARIES})
@@ -511,7 +516,7 @@ ENDFOREACH()
 INCLUDE_DIRECTORIES(
   ${OPENSSL_INCLUDE_DIRS}
   ${LIBEVENT_INCLUDE_DIRS}
-  ${SQLITE3_INCLUDE_DIRS}
+  #${SQLITE3_INCLUDE_DIRS}
   ${JANSSON_INCLUDE_DIRS}
   ${LIBSEARPC_INCLUDE_DIRS}
   ${LIBSEAFILE_INCLUDE_DIRS}
@@ -523,7 +528,7 @@ LINK_DIRECTORIES(
   ${LIBEVENT_LIBRARY_DIRS}
   ${LIBSEAFILE_LIBRARY_DIRS}
   ${LIBSEARPC_LIBRARY_DIRS}
-  ${SQLITE3_LIBRARRY_DIRS}
+  #${SQLITE3_LIBRARRY_DIRS}
   ${JANSSON_LIBRARRY_DIRS}
   ${ZLIB_LIBRARRY_DIRS}
 )
@@ -558,7 +563,8 @@ FUNCTION(ADD_SC_LIBRARY name)
       ${MOC_OUTPUT} ${UI_OUTPUT})
 
     TARGET_LINK_LIBRARIES(${name} ${QT_LIBRARIES}
-        ${SQLITE3_LIBRARIES} ${JANSSON_LIBRARIES}
+        #${SQLITE3_LIBRARIES}
+        ${JANSSON_LIBRARIES}
         ${EXTRA_LIBS} -lglib-2.0 ${ARG_LINK_LIBS} ${ZLIB_LIBRARIES})
 ENDFUNCTION(ADD_SC_LIBRARY)
 
@@ -612,12 +618,38 @@ LIST(APPEND quazip_sources
 
 ADD_SC_LIBRARY(quazip ${quazip_sources})
 
-SET(SC_LIBS utils quazip)
-#SET(SC_LIBS utils)
+# library sqlite3
+LIST(APPEND sqlite3_sources
+    third_party/sqlite3/shell.c
+    third_party/sqlite3/sqlite3.c
+    )
+ADD_SC_LIBRARY(sqlite3 ${sqlite3_sources})
 
+# library jansson
+LIST(APPEND jansson_sources
+    third_party/jansson/dump.c
+    third_party/jansson/error.c
+    third_party/jansson/hashtable.c
+    third_party/jansson/hashtable_seed.c
+    third_party/jansson/load.c
+    third_party/jansson/memory.c
+    third_party/jansson/pack_unpack.c
+    third_party/jansson/strbuffer.c
+    third_party/jansson/strconv.c
+    third_party/jansson/utf.c
+    third_party/jansson/value.c
+    third_party/jansson/version.c
+    )
+ADD_SC_LIBRARY(jansson ${jansson_sources})
+
+SET(SC_LIBS utils quazip sqlite3 jansson)
+#SET(SC_LIBS utils sqlite3)
+#SET(SC_LIBS utils)
 ####################
 ###### end: lib
 ####################
+
+add_subdirectory(third_party)
 
 ####################
 ###### start: translations
@@ -782,19 +814,32 @@ ADD_EXECUTABLE(seafile-applet ${GUI_TYPE}
 
 INSTALL(TARGETS seafile-applet DESTINATION bin)
 
+target_include_directories(seafile-applet
+    PRIVATE /home/mauz/Android/glib-2.63.3/glib)
+
 TARGET_LINK_LIBRARIES(seafile-applet
   ${SPARKLE_LIBS}
   ${SC_LIBS}
   ${QT_LIBRARIES}
   ${OPENSSL_LIBRARIES}
   ${LIBEVENT_LIBRARIES}
-  ${SQLITE3_LIBRARIES}
+  #${SQLITE3_LIBRARIES}
   ${JANSSON_LIBRARIES}
   ${LIBSEARPC_LIBRARIES}
   ${LIBSEAFILE_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${EXTRA_LIBS}
 )
+
+
+#add_library(openssl STATIC IMPORTED)
+message(STATUS "---------------------------------------------------------------- ${openssl_LIBRARIES}")
+
+
+include_directories(${OPENSSL_INCLUDE_DIR})
+target_link_libraries(seafile-applet openssl)
+add_dependencies(seafile-applet openssl_project) #wait before trying to include the dirs needed
+
 
 target_link_libraries(seafile-applet Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
 IF (BUILD_SHIBBOLETH_SUPPORT)
@@ -844,7 +889,9 @@ IF (BUILD_TESTING)
         ADD_EXECUTABLE(${testname} ${${testname}_SRCS})
 
         TARGET_LINK_LIBRARIES(${testname} ${QT_LIBRARIES}
-                ${QTESTLIB} ${SQLITE3_LIBRARIES} ${JANSSON_LIBRARIES}
+                ${QTESTLIB}
+                #${SQLITE3_LIBRARIES}
+                ${JANSSON_LIBRARIES}
                 ${EXTRA_LIBS} -lglib-2.0 ${SC_LIBS} ${ZLIB_LIBRARIES})
         SET_TARGET_PROPERTIES(${testname} PROPERTIES
           RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests )

@@ -10,7 +10,7 @@ extern "C" {
 
 struct _GList;
 // Can't forward-declare type SearpcClient here because it is an anonymous typedef struct
-#include <searpc-client.h>
+#include "searpc-client.h"
 
 }
 
