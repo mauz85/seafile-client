@@ -1,6 +1,6 @@
 extern "C" {
 
-#include <searpc-client.h>
+#include <rpc/searpc-client.h>
 #include <searpc-named-pipe-transport.h>
 
 #include <searpc.h>
@@ -116,7 +116,7 @@ bool SeafileRpcClient::connectDaemon(bool exit_on_error)
 int SeafileRpcClient::listLocalRepos(std::vector<LocalRepo> *result)
 {
     GError *error = NULL;
-    GList *repos = seafile_get_repo_list(seafile_rpc_client_, 0, 0, &error);
+    GList *repos = NULL; //seafile_get_repo_list(seafile_rpc_client_, 0, 0, &error);
     if (error != NULL) {
         qWarning("failed to get repo list: %s\n", error->message);
         g_error_free(error);
@@ -234,12 +234,14 @@ int SeafileRpcClient::cloneRepo(const QString& id,
 int SeafileRpcClient::getLocalRepo(const QString& repo_id, LocalRepo *repo)
 {
     GError *error = NULL;
-    GObject *obj = searpc_client_call__object(
-        seafile_rpc_client_,
-        "seafile_get_repo",
-        SEAFILE_TYPE_REPO,
-        &error, 1,
-        "string", toCStr(repo_id));
+    //TODO mauz:
+    GObject *obj = NULL;
+//    searpc_client_call__object(
+//        seafile_rpc_client_,
+//        "seafile_get_repo",
+//        SEAFILE_TYPE_REPO,
+//        &error, 1,
+//        "string", toCStr(repo_id));
 
     if (error != NULL) {
         g_error_free(error);
@@ -362,12 +364,14 @@ void SeafileRpcClient::getSyncStatus(LocalRepo &repo)
     }
 
     GError *error = NULL;
-    SeafileSyncTask *task = (SeafileSyncTask *)
-        searpc_client_call__object (seafile_rpc_client_,
-                                    "seafile_get_repo_sync_task",
-                                    SEAFILE_TYPE_SYNC_TASK,
-                                    &error, 1,
-                                    "string", toCStr(repo.id));
+    SeafileSyncTask *task = NULL;
+    // TODO mauz
+//    (SeafileSyncTask *)
+//        searpc_client_call__object (seafile_rpc_client_,
+//                                    "seafile_get_repo_sync_task",
+//                                    SEAFILE_TYPE_SYNC_TASK,
+//                                    &error, 1,
+//                                    "string", toCStr(repo.id));
     if (error) {
         repo.setSyncInfo("unknown");
         g_error_free(error);
@@ -403,11 +407,12 @@ void SeafileRpcClient::getSyncStatus(LocalRepo &repo)
 int SeafileRpcClient::getCloneTasks(std::vector<CloneTask> *tasks)
 {
     GError *error = NULL;
-    GList *objlist = searpc_client_call__objlist(
-        seafile_rpc_client_,
-        "seafile_get_clone_tasks",
-        SEAFILE_TYPE_CLONE_TASK,
-        &error, 0);
+    GList *objlist = NULL;
+            // TODO mauz: searpc_client_call__objlist(
+//        seafile_rpc_client_,
+//        "seafile_get_clone_tasks",
+//        SEAFILE_TYPE_CLONE_TASK,
+//        &error, 0);
 
     if (error) {
         g_error_free(error);
@@ -433,12 +438,14 @@ int SeafileRpcClient::getCloneTasks(std::vector<CloneTask> *tasks)
 void SeafileRpcClient::getTransferDetail(CloneTask* task)
 {
     GError *error = NULL;
-    GObject *obj = searpc_client_call__object(
-        seafile_rpc_client_,
-        "seafile_find_transfer_task",
-        SEAFILE_TYPE_TASK,
-        &error, 1,
-        "string", toCStr(task->repo_id));
+    GObject *obj = NULL;
+    // TODO mauz
+//            searpc_client_call__object(
+//        seafile_rpc_client_,
+//        "seafile_find_transfer_task",
+//        SEAFILE_TYPE_TASK,
+//        &error, 1,
+//        "string", toCStr(task->repo_id));
 
     if (error != NULL) {
         g_error_free(error);
@@ -526,11 +533,12 @@ int SeafileRpcClient::removeCloneTask(const QString& repo_id, QString *err)
 int SeafileRpcClient::getCloneTasksCount(int *count)
 {
     GError *error = NULL;
-    GList *objlist = searpc_client_call__objlist(
-        seafile_rpc_client_,
-        "seafile_get_clone_tasks",
-        SEAFILE_TYPE_CLONE_TASK,
-        &error, 0);
+    GList *objlist = NULL;
+    // TODO mauzsearpc_client_call__objlist(
+//        seafile_rpc_client_,
+//        "seafile_get_clone_tasks",
+//        SEAFILE_TYPE_CLONE_TASK,
+//        &error, 0);
 
     if (error) {
         g_error_free(error);
@@ -634,11 +642,12 @@ int SeafileRpcClient::unsync(const QString& repo_id)
 int SeafileRpcClient::getRepoTransferInfo(const QString& repo_id, int *rate, int *percent, QString *rt_state)
 {
     GError *error = NULL;
-    GObject *task = searpc_client_call__object (seafile_rpc_client_,
+    GObject *task = NULL; // TODO mauz
+    /*searpc_client_call__object (seafile_rpc_client_,
                                                 "seafile_find_transfer_task",
                                                 SEAFILE_TYPE_TASK,
                                                 &error, 1,
-                                                "string", toCStr(repo_id));
+                                                "string", toCStr(repo_id));*/
     if (error) {
         g_error_free(error);
         return -1;
@@ -872,14 +881,16 @@ int SeafileRpcClient::generateMagicAndRandomKey(int enc_version,
                                                 QString *salt)
 {
     GError *error = NULL;
-    GObject *obj = searpc_client_call__object (
-        seafile_rpc_client_,
-        "seafile_generate_magic_and_random_key",
-        SEAFILE_TYPE_ENCRYPTION_INFO,
-        &error, 3,
-        "int", enc_version,
-        "string", toCStr(repo_id),
-        "string", toCStr(passwd));
+    GObject *obj = NULL;
+    // TODO mauz
+//    searpc_client_call__object (
+//        seafile_rpc_client_,
+//        "seafile_generate_magic_and_random_key",
+//        SEAFILE_TYPE_ENCRYPTION_INFO,
+//        &error, 3,
+//        "int", enc_version,
+//        "string", toCStr(repo_id),
+//        "string", toCStr(passwd));
     if (error) {
         qWarning("failed to generate magic and random_key : %s\n", error->message);
         g_error_free(error);
@@ -940,15 +951,17 @@ bool SeafileRpcClient::getCommitDiff(const QString& repo_id,
     QMutexLocker locker(&threaded_rpc_mutex_);
 
     GError *error = NULL;
-    GList *objlist = searpc_client_call__objlist(
-        seafile_threaded_rpc_client_,
-        "seafile_diff",
-        SEAFILE_TYPE_DIFF_ENTRY,
-        &error, 4,
-        "string", toCStr(repo_id),
-        "string", toCStr(commit_id),
-        "string", toCStr(previous_commit_id),
-        "int", 1);
+    GList *objlist = NULL;
+    // TODO mauz
+//    searpc_client_call__objlist(
+//        seafile_threaded_rpc_client_,
+//        "seafile_diff",
+//        SEAFILE_TYPE_DIFF_ENTRY,
+//        &error, 4,
+//        "string", toCStr(repo_id),
+//        "string", toCStr(commit_id),
+//        "string", toCStr(previous_commit_id),
+//        "int", 1);
 
     if (error) {
         qWarning("failed to get changes in commit %.7s of repo %.7s", toCStr(commit_id), toCStr(repo_id));
@@ -966,11 +979,13 @@ bool SeafileRpcClient::getCommitDiff(const QString& repo_id,
 bool SeafileRpcClient::getSyncErrors(std::vector<SyncError> *errors, int offset, int limit)
 {
     GError *error = NULL;
-    GList *objlist = searpc_client_call__objlist(
-        seafile_rpc_client_,
-        "seafile_get_file_sync_errors",
-        SEAFILE_TYPE_FILE_SYNC_ERROR,
-        &error, 2, "int", offset, "int", limit);
+    GList *objlist = NULL;
+    // TODO mauz
+//            searpc_client_call__objlist(
+//        seafile_rpc_client_,
+//        "seafile_get_file_sync_errors",
+//        SEAFILE_TYPE_FILE_SYNC_ERROR,
+//        &error, 2, "int", offset, "int", limit);
 
 
     for (GList *ptr = objlist; ptr; ptr = ptr->next) {

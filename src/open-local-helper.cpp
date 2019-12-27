@@ -8,11 +8,11 @@
 #include <QVariant>
 
 extern "C" {
-#include <searpc-client.h>
+#include <rpc/searpc-client.h>
 
-#include <searpc.h>
+#include "searpc.h"
 #include <seafile/seafile.h>
-#include <seafile/seafile-object.h>
+#include <seafile/seafile-object.h> //TODO: Build seafile and generate seafile-object.h file
 
 }
 

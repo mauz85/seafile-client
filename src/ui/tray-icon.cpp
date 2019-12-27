@@ -41,7 +41,7 @@ extern void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 #include "utils/utils-mac.h"
 
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) && !defined (ANDROID)
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
@@ -346,7 +346,7 @@ void SeafileTrayIcon::showMessage(const QString &title,
     // qWarning("using new style notifications");
 
     QSystemTrayIcon::showMessage(title, message, icon, millisecondsTimeoutHint);
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_LINUX) && !defined (ANDROID)
     repo_id_ = repo_id;
     Q_UNUSED(icon);
     QVariantMap hints;

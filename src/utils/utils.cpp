@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <sqlite3.h>
-#include "glib.h"
+#include "/home/mauz/Android/glib-2.63.3/glib/glib.h"
 #include <cstring>
 #include <QObject>
 #include <QString>

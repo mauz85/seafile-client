@@ -1,4 +1,4 @@
-#include <glib.h>
+#include <glib/glib.h>
 #include <QTranslator>
 #include <QLibraryInfo>
 #include <QApplication>

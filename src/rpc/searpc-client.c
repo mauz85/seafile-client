@@ -642,7 +642,7 @@ searpc_client_fret__object (GType gtype, char *data, size_t len, GError **error)
             return NULL;
         }
         
-        ret = json_gobject_deserialize(gtype, member);
+        ret = NULL; // TODO mauz json_gobject_deserialize(gtype, member);
         json_decref(object);
         return ret;
     }
@@ -668,7 +668,7 @@ searpc_client_fret__objlist (GType gtype, char *data, size_t len, GError **error
         int i;
         for (i = 0; i < json_array_size(array); i++) {
             json_t *member = json_array_get (array, i);
-            GObject *obj = json_gobject_deserialize(gtype, member);
+            GObject *obj = NULL; //TODO mauz json_gobject_deserialize(gtype, member);
             if (obj == NULL) {
                 g_set_error (error, DFT_DOMAIN, 503, 
                              "Invalid data: object list contains null");

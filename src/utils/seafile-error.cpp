@@ -1,5 +1,4 @@
 #include "seafile-error.h"
-#include <seafile/seafile-error.h>
 
 QString
 translateSyncErrorCode(const int error_code)

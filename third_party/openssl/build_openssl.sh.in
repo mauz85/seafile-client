@@ -9,11 +9,10 @@ export ANDROID_NDK_HOME="@CMAKE_ANDROID_NDK@"
 
 # Configure the OpenSSL environment, refer to NOTES.ANDROID in OPENSSL_DIR
 # Set compiler clang, instead of gcc by default
-CC=clang
+CC=clang #arm-linux-androideabi-clang
 
 # Add toolchains bin directory to PATH
 PATH=@ANDROID_TOOLCHAIN_ROOT@/bin:$PATH
-echo "PPPPPPPPPPPPPPPPPPP $PATH"
 
 #make clean
 make

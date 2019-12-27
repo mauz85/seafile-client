@@ -8,6 +8,7 @@ SET(PROJECT_VERSION "${SEAFILE_CLIENT_VERSION_MAJOR}.${SEAFILE_CLIENT_VERSION_MI
 ADD_DEFINITIONS(-DSEAFILE_CLIENT_VERSION=${PROJECT_VERSION})
 INCLUDE(FindPkgConfig)
 
+set(ANDROID_BUILD ON)
 set(ANDROID_PLATFORM 28) # TODO: Set this over environment variable!!!!!
 
 ## Build crash repoter on release build as default
@@ -367,23 +368,26 @@ ENDIF(NOT WIN32 AND NOT APPLE)
 ####################
 FIND_PACKAGE(PkgConfig REQUIRED)
 
-PKG_CHECK_MODULES(SQLITE3 REQUIRED sqlite3>=3.0.0)
+if (NOT ANDROID_BUILD)
+    PKG_CHECK_MODULES(SQLITE3 REQUIRED sqlite3>=3.0.0)
+    PKG_CHECK_MODULES(JANSSON REQUIRED jansson>=2.0)
+    PKG_CHECK_MODULES(LIBSEARPC REQUIRED libsearpc>=1.0)
+    PKG_CHECK_MODULES(OPENSSL REQUIRED openssl>=0.98)
+    PKG_CHECK_MODULES(LIBSEAFILE REQUIRED libseafile>=1.7)
+    PKG_CHECK_MODULES(LIBEVENT REQUIRED libevent>=2.0)
+endif()
 
-PKG_CHECK_MODULES(JANSSON REQUIRED jansson>=2.0)
 
-PKG_CHECK_MODULES(LIBSEARPC REQUIRED libsearpc>=1.0)
 
-PKG_CHECK_MODULES(OPENSSL REQUIRED openssl>=0.98)
 
-PKG_CHECK_MODULES(LIBSEAFILE REQUIRED libseafile>=1.7)
 
-PKG_CHECK_MODULES(LIBEVENT REQUIRED libevent>=2.0)
 
 PKG_CHECK_MODULES(ZLIB REQUIRED zlib>=1.2)
 ####################
 ###### END: other libraries configuration
 ####################
 
+add_subdirectory(third_party)
 
 # c/cpp sources
 SET(seafile_client_sources
@@ -411,6 +415,8 @@ SET(seafile_client_sources
   src/certs-mgr.cpp
   src/log-uploader.cpp
   src/sync-error-service.cpp
+  src/searpc-named-pipe-transport.c
+  src/searpc-server.c
   src/api/api-client.cpp
   src/api/api-request.cpp
   src/api/api-error.cpp
@@ -425,6 +431,7 @@ SET(seafile_client_sources
   src/rpc/local-repo.cpp
   src/rpc/clone-task.cpp
   src/rpc/sync-error.cpp
+  src/rpc/searpc-client.c
   src/ui/about-dialog.cpp
   src/ui/main-window.cpp
   src/ui/init-seafile-dialog.cpp
@@ -513,17 +520,34 @@ ${Qt5${USE_QT_LIBRARY}_INCLUDE_DIRS}
 )
 ENDFOREACH()
 
-INCLUDE_DIRECTORIES(
-  ${OPENSSL_INCLUDE_DIRS}
-  ${LIBEVENT_INCLUDE_DIRS}
-  #${SQLITE3_INCLUDE_DIRS}
-  ${JANSSON_INCLUDE_DIRS}
-  ${LIBSEARPC_INCLUDE_DIRS}
-  ${LIBSEAFILE_INCLUDE_DIRS}
-)
+if (ANDROID_BUILD)
+    set(OPENSSL_INCLUDE_DIR ${CMAKE_BINARY_DIR}/third_party/openssl/openssl_project-prefix/src/openssl_project/include)
+    INCLUDE_DIRECTORIES(
+      ${OPENSSL_INCLUDE_DIR}
+      ${CMAKE_BINARY_DIR}/third_party/openssl/openssl_project-prefix/src/openssl_project-build/include
+      ${LIBEVENT_INCLUDE_DIRS}
+      /home/mauz/Android/glib-2.63.3/
+      /home/mauz/Android/glib-2.63.3/glib
+      /home/mauz/Android/build_glib/glib
+      /home/mauz/Android/build_glib/
+    )
+else ()
+    INCLUDE_DIRECTORIES(
+      ${OPENSSL_INCLUDE_DIRS}
+      ${LIBEVENT_INCLUDE_DIRS}
+      ${SQLITE3_INCLUDE_DIRS}
+      ${JANSSON_INCLUDE_DIRS}
+      ${LIBSEARPC_INCLUDE_DIRS}
+      ${LIBSEAFILE_INCLUDE_DIRS}
+    )
+endif()
 
 LINK_DIRECTORIES(
   ${QT_LIBRARY_DIR}
+  ${CMAKE_BINARY_DIR}/third_party/openssl/openssl_project-prefix/src/openssl_project-build/
+  /home/mauz/Android/build_glib/glib
+  /home/mauz/Android/build_glib/gobject
+  ${CMAKE_BINARY_DIR}
   ${OPENSSL_LIBRARY_DIRS}
   ${LIBEVENT_LIBRARY_DIRS}
   ${LIBSEAFILE_LIBRARY_DIRS}
@@ -562,10 +586,23 @@ FUNCTION(ADD_SC_LIBRARY name)
     ADD_LIBRARY(${name} STATIC ${ARG_UNPARSED_ARGUMENTS}
       ${MOC_OUTPUT} ${UI_OUTPUT})
 
-    TARGET_LINK_LIBRARIES(${name} ${QT_LIBRARIES}
+    TARGET_INCLUDE_DIRECTORIES(${name}
+      PRIVATE /home/mauz/Android/glib-2.63.3/glib)
+
+    MESSAGE(STATUS "TARGET LINKT Lrary QT_LIBRARIES: ${QT_LIBRARIES}")
+    MESSAGE(STATUS "TARGET LINKT Lrary JANSSON_LIBRARIES: ${JANSSON_LIBRARIES}")
+    MESSAGE(STATUS "TARGET LINKT Lrary EXTRA_LIBS: ${EXTRA_LIBS}")
+    MESSAGE(STATUS "TARGET LINKT Lrary ARG_LINK_LIBS: ${ARG_LINK_LIBS}")
+    MESSAGE(STATUS "TARGET LINKT Lrary ZLIB_LIBRARIES: ${ZLIB_LIBRARIES}")
+    TARGET_LINK_LIBRARIES(${name}
+        ${QT_LIBRARIES}
         #${SQLITE3_LIBRARIES}
         ${JANSSON_LIBRARIES}
-        ${EXTRA_LIBS} -lglib-2.0 ${ARG_LINK_LIBS} ${ZLIB_LIBRARIES})
+        ${EXTRA_LIBS}
+        -lglib-2.0
+        -lgobject-2.0
+        ${ARG_LINK_LIBS}
+        ${ZLIB_LIBRARIES})
 ENDFUNCTION(ADD_SC_LIBRARY)
 
 # library utils
@@ -587,7 +624,7 @@ IF (WIN32)
         src/utils/registry.cpp
         src/utils/utils-win.cpp
         )
-ELSEIF (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "BSD")
+ELSEIF (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "BSD" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android")
     LIST(APPEND utils_sources
         src/utils/process-linux.cpp
         )
@@ -648,8 +685,6 @@ SET(SC_LIBS utils quazip sqlite3 jansson)
 ####################
 ###### end: lib
 ####################
-
-add_subdirectory(third_party)
 
 ####################
 ###### start: translations
@@ -815,18 +850,20 @@ ADD_EXECUTABLE(seafile-applet ${GUI_TYPE}
 INSTALL(TARGETS seafile-applet DESTINATION bin)
 
 target_include_directories(seafile-applet
-    PRIVATE /home/mauz/Android/glib-2.63.3/glib)
+    PRIVATE /home/mauz/Android/glib-2.63.3/)
+
+message(STATUS "----------------------------------------------------------------LIBEVENT_LIBRARIES ${LIBEVENT_LIBRARIES}")
 
 TARGET_LINK_LIBRARIES(seafile-applet
   ${SPARKLE_LIBS}
   ${SC_LIBS}
   ${QT_LIBRARIES}
   ${OPENSSL_LIBRARIES}
-  ${LIBEVENT_LIBRARIES}
+  #${LIBEVENT_LIBRARIES}
   #${SQLITE3_LIBRARIES}
   ${JANSSON_LIBRARIES}
-  ${LIBSEARPC_LIBRARIES}
-  ${LIBSEAFILE_LIBRARIES}
+  #${LIBSEARPC_LIBRARIES}
+  #${LIBSEAFILE_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${EXTRA_LIBS}
 )
@@ -834,12 +871,15 @@ TARGET_LINK_LIBRARIES(seafile-applet
 
 #add_library(openssl STATIC IMPORTED)
 message(STATUS "---------------------------------------------------------------- ${openssl_LIBRARIES}")
-
-
-include_directories(${OPENSSL_INCLUDE_DIR})
-target_link_libraries(seafile-applet openssl)
+message(STATUS "DDDDDDDDDDDDDDDDDDDDDDdddd 1")
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${dirs})
+  message(STATUS "dir='${dir}'")
+endforeach()
+target_link_libraries(seafile-applet
+    -lcrypto
+    -lssl)
 add_dependencies(seafile-applet openssl_project) #wait before trying to include the dirs needed
-
 
 target_link_libraries(seafile-applet Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
 IF (BUILD_SHIBBOLETH_SUPPORT)
@@ -891,8 +931,12 @@ IF (BUILD_TESTING)
         TARGET_LINK_LIBRARIES(${testname} ${QT_LIBRARIES}
                 ${QTESTLIB}
                 #${SQLITE3_LIBRARIES}
-                ${JANSSON_LIBRARIES}
-                ${EXTRA_LIBS} -lglib-2.0 ${SC_LIBS} ${ZLIB_LIBRARIES})
+                #${JANSSON_LIBRARIES}
+                ${EXTRA_LIBS}
+                -lglib-2.0
+                -lgobject-2.0
+                ${SC_LIBS}
+                ${ZLIB_LIBRARIES})
         SET_TARGET_PROPERTIES(${testname} PROPERTIES
           RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests )
 
@@ -911,3 +955,5 @@ IF (BUILD_TESTING)
     ADD_QTEST(test_file-utils)
     ADD_QTEST(test_stl)
 ENDIF()
+
+

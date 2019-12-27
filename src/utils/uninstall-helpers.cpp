@@ -1,5 +1,5 @@
 extern "C" {
-#include <searpc-client.h>
+#include <rpc/searpc-client.h>
 
 #include <searpc.h>
 #include <seafile/seafile.h>
