@@ -22,11 +22,11 @@ message( STATUS "CMAKE_ANDROID_NDK_TOOLCHAIN_VERSION: ${CMAKE_ANDROID_NDK_TOOLCH
 message( STATUS "ANDROID_TOOLCHAIN_PREFIX: ${ANDROID_TOOLCHAIN_PREFIX}" )
 message( STATUS "CMAKE_<LANG>_ANDROID_TOOLCHAIN_SUFFIX: ${CMAKE_TOOLCHAIN_FILE}" )
 
-#get_cmake_property(_variableNames VARIABLES)
-#list (SORT _variableNames)
-#foreach (_variableName ${_variableNames})
-#    message(STATUS "${_variableName}=${${_variableName}}")
-#endforeach()
+get_cmake_property(_variableNames VARIABLES)
+list (SORT _variableNames)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()
 
 #set architecture with variable system_name
 #android-arm android-arm64 android-armeabi android-mips android-mips64 android-x86 android-x86_64 android64 android64-aarch64 android64-mips64 android64-x86_64
@@ -41,7 +41,7 @@ endif()
 
 message( STATUS "system_name: ${system_name}" )
 
-#set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${NAME}-prefix/src/${NAME}-build")
+set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${NAME}-prefix/src/${NAME}-build")
 
 set(openssl_source_dir "${CMAKE_CURRENT_BINARY_DIR}/${NAME}-prefix/src/${NAME}")
 configure_file("configure_openssl.sh.in" "configure_openssl.sh" @ONLY)
@@ -61,3 +61,5 @@ SET(OPENSSL_INCLUDE_DIR ${BINARY_DIR}/include)
 SET(OPENSSL_LIB_DIR ${BINARY_DIR})
 
 add_library(openssl SHARED IMPORTED)
+add_library(crypto STATIC IMPORTED)
+set_property(TARGET crypto PROPERTY IMPORTED_LOCATION ${build_dir}/libcrypto.a)

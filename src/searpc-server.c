@@ -117,7 +117,7 @@ searpc_set_object_to_ret_object (json_t *object, GObject *ret)
     if (ret == NULL)
         json_object_set_new (object, "ret", json_null ());
     else {
-        json_object_set_new (object, "ret", json_gobject_serialize (ret));
+        // TODO mauz json_object_set_new (object, "ret", json_gobject_serialize (ret));
         g_object_unref (ret);
     }
 }
@@ -132,7 +132,7 @@ searpc_set_objlist_to_ret_object (json_t *object, GList *ret)
     else {
         json_t *array = json_array ();
         for (ptr = ret; ptr; ptr = ptr->next)
-            json_array_append_new (array, json_gobject_serialize (ptr->data));
+            // TODO mauz json_array_append_new (array, json_gobject_serialize (ptr->data));
         json_object_set_new (object, "ret", array);
 
         for (ptr = ret; ptr; ptr = ptr->next)

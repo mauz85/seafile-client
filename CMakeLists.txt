@@ -8,6 +8,7 @@ SET(PROJECT_VERSION "${SEAFILE_CLIENT_VERSION_MAJOR}.${SEAFILE_CLIENT_VERSION_MI
 ADD_DEFINITIONS(-DSEAFILE_CLIENT_VERSION=${PROJECT_VERSION})
 INCLUDE(FindPkgConfig)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(ANDROID_BUILD ON)
 set(ANDROID_PLATFORM 28) # TODO: Set this over environment variable!!!!!
 
@@ -838,21 +839,29 @@ endif()
 ####################
 ###### end: freedesktop files
 ####################
-
-ADD_EXECUTABLE(seafile-applet ${GUI_TYPE}
-  ${seafile_client_sources}
-  ${moc_output}
-  ${ui_output}
-  ${resources_ouput}
-  ${EXTRA_SOURCES}
-)
-
-INSTALL(TARGETS seafile-applet DESTINATION bin)
+if(ANDROID)
+    add_library(seafile-applet SHARED
+        ${GUI_TYPE}
+        ${seafile_client_sources}
+        ${moc_output}
+        ${ui_output}
+        ${resources_ouput}
+        ${EXTRA_SOURCES}
+        )
+else()
+    ADD_EXECUTABLE(seafile-applet ${GUI_TYPE}
+      ${seafile_client_sources}
+      ${moc_output}
+      ${ui_output}
+      ${resources_ouput}
+      ${EXTRA_SOURCES}
+    )
+endif()
 
 target_include_directories(seafile-applet
     PRIVATE /home/mauz/Android/glib-2.63.3/)
 
-message(STATUS "----------------------------------------------------------------LIBEVENT_LIBRARIES ${LIBEVENT_LIBRARIES}")
+message(STATUS "----------------------------------------------------------------OPENSSL_LIBRARIES ${OPENSSL_LIBRARIES}")
 
 TARGET_LINK_LIBRARIES(seafile-applet
   ${SPARKLE_LIBS}
@@ -870,20 +879,25 @@ TARGET_LINK_LIBRARIES(seafile-applet
 
 
 #add_library(openssl STATIC IMPORTED)
-message(STATUS "---------------------------------------------------------------- ${openssl_LIBRARIES}")
-message(STATUS "DDDDDDDDDDDDDDDDDDDDDDdddd 1")
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-foreach(dir ${dirs})
-  message(STATUS "dir='${dir}'")
-endforeach()
+#message(STATUS "---------------------------------------------------------------- ${openssl_LIBRARIES}")
+#message(STATUS "DDDDDDDDDDDDDDDDDDDDDDdddd 1")
+#get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+#foreach(dir ${dirs})
+#  message(STATUS "dir='${dir}'")
+#endforeach()
+add_library(crypto STATIC IMPORTED)
+set_property(TARGET crypto PROPERTY IMPORTED_LOCATION /home/mauz/projects/build-m-seafile-client-Android_for_x86_Clang_Qt_5_12_6_for_Android_x86-Debug/third_party/openssl/openssl_project-prefix/src/openssl_project-build/libcrypto.a)
+add_library(ssl STATIC IMPORTED)
+set_property(TARGET ssl PROPERTY IMPORTED_LOCATION /home/mauz/projects/build-m-seafile-client-Android_for_x86_Clang_Qt_5_12_6_for_Android_x86-Debug/third_party/openssl/openssl_project-prefix/src/openssl_project-build/libssl.a)
+
 target_link_libraries(seafile-applet
-    -lcrypto
-    -lssl)
+    crypto
+    ssl)
 add_dependencies(seafile-applet openssl_project) #wait before trying to include the dirs needed
 
 target_link_libraries(seafile-applet Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
 IF (BUILD_SHIBBOLETH_SUPPORT)
-target_link_libraries(seafile-applet Qt5::${WEBKIT_NAME} Qt5::${WEBKIT_WIDGETS_NAME})
+    target_link_libraries(seafile-applet Qt5::${WEBKIT_NAME} Qt5::${WEBKIT_WIDGETS_NAME})
 ENDIF()
 
 ## QtBus
@@ -956,4 +970,17 @@ IF (BUILD_TESTING)
     ADD_QTEST(test_stl)
 ENDIF()
 
+# Same problem with libnam.so.1 https://www.qtcentre.org/threads/60042-Deploying-a-Qt-application-on-Android-adding-additional-libraries-such-as-OpenSSL
+if(ANDROID)
+    #set(ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android CACHE INTERNAL)
+    include(android/AddQtAndroidApk.cmake)
+    add_qt_android_apk(seafileclient_apk seafile-applet
+        PACKAGE_NAME "ch.bangoneshead.mauzandroidseafileclient"
+        #DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/third_party/openssl/openssl_project-prefix/src/openssl_project-build/libcrypto.so" "${CMAKE_CURRENT_BINARY_DIR}/third_party/openssl/openssl_project-prefix/src/openssl_project-build/libssl.so"
+        DEPENDS "/home/mauz/Android/build_glib/glib/libglib-2.0.so" "/home/mauz/Android/build_glib/gobject/libgobject-2.0.so" "/home/mauz/Android/build_glib/subprojects/proxy-libintl/libintl.so" "/home/mauz/Android/build_glib/subprojects/libffi/src/libffi.so"
+        INSTALL
+    )
+else()
+    INSTALL(TARGETS seafile-applet DESTINATION bin)
+endif()
 
